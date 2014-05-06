@@ -12,7 +12,7 @@
 
 * grunt
     *   file.js [[done](https://github.com/qivhou/deep-into-grunt/blob/master/grunt/file.md)]
-    *   option.js [[done](https://github.com/qivhou/deep-into-grunt/blob/master/grunt/file.md)]
+    *   option.js [[done](https://github.com/qivhou/deep-into-grunt/blob/master/grunt/option.md)]
     *   cli.js
     *   config.js
     *   event.js
