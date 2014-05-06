@@ -8,25 +8,24 @@
 
 ## 目录结构
 
-因为grunt源码本身有些文件是重名的，但是存在与不同的目录中，所以为了避免不必要的误解和冲突，所以沿用源码的目录结构，而且文件名只是将`js`替换为`md`，这样读起来也许会更方便。
+因为grunt源码本身有些文件是重名的，但是存在与不同的目录中，为了避免不必要的误解和冲突，这里沿用源码的目录结构，而且文件名只是将`js`替换为`md`，这样读起来也许会更方便。
 
-├─ grunt
-│  ├─ file.js       [done](https://github.com/qivhou/deep-into-grunt/blob/master/grunt/file.md)
-│  │─ option.js     [done](https://github.com/qivhou/deep-into-grunt/blob/master/grunt/file.md)
-│  ├─ cli.js        [in progress]
-│  ├─ config.js     [pending]
-│  ├─ event.js      [pending]
-│  ├─ fail.js       [pending]
-│  ├─ help.js       [pending]
-│  ├─ log.js        [pending]
-│  ├─ task.js       [pending]
-│  ├─ template.js   [pending]
-│  └─ grunt.js      [pending]
-│
-├─ util
-│  └─ task.js       [pending]
-│
-└─ grunt.js         [pending]
+* grunt
+    *   file.js [[done](https://github.com/qivhou/deep-into-grunt/blob/master/grunt/file.md)]
+    *   option.js [[done](https://github.com/qivhou/deep-into-grunt/blob/master/grunt/file.md)]
+    *   cli.js
+    *   config.js
+    *   event.js
+    *   fail.js
+    *   help.js
+    *   log.js 
+    *   task.js
+    *   template.js
+    *   grunt.js
+*   util
+    *   task.js
+*    grunt.js
+
 
 ## 阶段说明
 
