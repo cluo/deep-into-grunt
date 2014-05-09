@@ -13,7 +13,7 @@
 * grunt
     *   file.js [[done](https://github.com/qivhou/deep-into-grunt/blob/master/grunt/file.md)]
     *   option.js [[done](https://github.com/qivhou/deep-into-grunt/blob/master/grunt/option.md)]
-    *   cli.js[[done](https://github.com/qivhou/deep-into-grunt/blob/master/grunt/option.md)]
+    *   cli.js [[done](https://github.com/qivhou/deep-into-grunt/blob/master/grunt/cli.md)]
     *   config.js
     *   event.js
     *   fail.js
