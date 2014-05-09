@@ -2,7 +2,7 @@
 
 源码路径：https://github.com/gruntjs/grunt/blob/master/lib/grunt/cli.js
 
-该模块主要涉及`grunt`中的[cli][]部分即命令行用户接口。截止到目前为止，Grunt的命令执行还是由命令行进行的，当然已知的是TooBug等高级用户已经在研究图形化界面的Grunt配置及操作，但即使是那样，[cli][]部分也是及其重要的，因为所有的图形化界面操作最后还是会调用命令行接口来进行最终操作。
+该模块主要涉及Grunt中的[cli][]部分即命令行用户接口。截止到目前为止，Grunt的命令执行还是由命令行进行的，当然已知的是TooBug等高级用户已经在研究图形化界面的Grunt配置及操作，但即使是那样，[cli][]部分也是及其重要的，因为所有的图形化界面操作最后还是会调用命令行接口来进行最终操作。
 
 ## grunt内部调用模块
 
@@ -64,12 +64,131 @@ var cli = module.exports = function(options, done) {
     });
   }
 ```
-__这里的代码`[].push.apply(cli.options[key], options[key])` 等价于下面的格式:__
+__注意：这里的代码`[].push.apply(cli.options[key], options[key])` 并不等价于下面的格式:__
+
 ```javascript
 cli.options[key].push(options[key]);
 ```
+__而是等价于下面的格式：__
 
-运行`grunt.tasks`方法。
+```javascript
+Array.prototype.push.apply(cli.options[key], options[key])
+```
+__这里其实包含一个很大的技巧，就是通过[Array.prototype.push.apply][]来达到数组`concat`的作用。__ 不明白发生了神马？说明还需要对[Function.prototype.apply][]加深理解啊。
+
+众所周知，[Function.prototype.apply][]接受两个参数`fun.apply(thisArg, [argsArray])`，用下面这个简单的例子来说明：
+
+```javascript
+var a = [1,2,3];
+var b = [4,5,6];
+Array.prototype.push.apply(a,b);
+//结果a值为[1,2,3,4,5,6]
+```
+当执行`Array.prototype.push.apply(a, b)`时，a为`thisArg`，b为参数列表（__注意：是参数列表__），所以代码实际执行如下：
+
+```javascript
+var a = [1,2,3];
+a.push(4, 5, 6)
+//结果a值为[1,2,3,4,5,6]
+```
+
+同样用试验来说明：
+
+```javascript
+//定义一个parsed变量，该变量模拟了最终的cli.options对象
+>var parsed = { force: true, target: 'dev' }
+
+//当对target项目执行下面的代码时
+> [].push.apply(parsed["target"], ["cssmin","htmlmin"])
+3
+//在运行结束后，我们发现什么也没有变化
+> parsed
+{ force: true, target: 'dev' }
+
+//接下来，我们为parsed变量添加一个tasks属性，属性值为空数组
+> parsed.tasks = []
+[]
+> parsed
+{ force: true, target: 'dev', tasks: [] }
+
+//然后运行相同的代码如下
+> [].push.apply(parsed["tasks"], ["cssmin","htmlmin"])
+2
+//查看结果，我们发现数组内容被append到tasks属性中
+> parsed
+{ force: true,
+  target: 'dev',
+  tasks: [ 'cssmin', 'htmlmin' ] }
+>
+```
+同样的过程，我们来试验一下`cli.options[key].push(options[key])`:
+
+```javascript
+//定义一个parsed变量，该变量模拟了最终的cli.options对象
+>var parsed = { force: true, target: 'dev' }
+
+//当对target项目执行下面的代码时，出现异常
+> parsed["target"].push(["cssmin","htmlmin"])
+TypeError: Object dev has no method 'push'
+    at repl:1:19
+    at REPLServer.self.eval (repl.js:110:21)
+    at Interface.<anonymous> (repl.js:239:12)
+    at Interface.EventEmitter.emit (events.js:95:17)
+    at Interface._onLine (readline.js:202:10)
+    at Interface._line (readline.js:531:8)
+    at Interface._ttyWrite (readline.js:760:14)
+    at ReadStream.onkeypress (readline.js:99:10)
+    at ReadStream.EventEmitter.emit (events.js:98:17)
+    at emitKey (readline.js:1095:12)
+
+//接下来，我们为parsed变量添加一个tasks属性，属性值为空数组
+> parsed.tasks = []
+[]
+> parsed
+{ force: true, target: 'dev', tasks: [] }
+
+//然后在tasks项目运行代码如下
+> parsed["tasks"].push["cssmin","htmlmin"])
+1
+//查看结果，我们发现数组内容被append到tasks属性中，但确是作为一个元素加入的
+> parsed
+{ force: true,
+  target: 'dev',
+  tasks: [ [ 'cssmin', 'htmlmin' ] ] }
+>
+
+```
+重复上面的步骤测试`Array.prototype.push.apply`:
+
+```javascript
+//定义一个parsed变量，该变量模拟了最终的cli.options对象
+>var parsed = { force: true, target: 'dev' }
+
+//当对target项目执行下面的代码时
+> Array.prototype.push.apply(parsed["target"], ["cssmin","htmlmin"])
+3
+//在运行结束后，我们发现什么也没有变化
+> parsed
+{ force: true, target: 'dev' }
+
+//接下来，我们为parsed变量添加一个tasks属性，属性值为空数组
+> parsed.tasks = []
+[]
+> parsed
+{ force: true, target: 'dev', tasks: [] }
+
+//然后运行相同的代码如下，结果与"[].push.apply"一致
+> Array.prototype.push.apply(parsed.tasks, ["cssmin","htmlmin"])
+2
+> parsed
+{ force: true,
+  target: 'dev',
+  tasks: [ 'cssmin', 'htmlmin' ] }
+```
+好了，关于这个问题就先到这里。如果还有兴趣的话，可以看看在jsperf上的[Array.prototype.push.apply vs concat](http://jsperf.com/array-prototype-push-apply-vs-concat/20)。
+
+继续看源码，将`cli.tasks`和`cli.options`和`done`作为参数调用`grunt.tasks`方法，具体的关于`cli.tasks`以及`cli.options`都是什么，是怎么来的，还需要继续往下看。
+
 ```javascript
   // Run tasks.
   grunt.tasks(cli.tasks, cli.options, done);
@@ -82,7 +201,7 @@ cli.options[key].push(options[key]);
 // Everything looks good. Require local grunt and run it.
 require(gruntpath).cli();
 ```
-这也就是为什么`cli`这么关键了，它是`grunt`命令行的入口。
+知道`cli`为什么这么关键了吧，它是`grunt`命令行的入口。
 
 ### cli.optlist
 
@@ -243,6 +362,28 @@ var parsed = nopt(known, aliases, process.argv, 2);
 
 接下来，将`parsed`的对象赋值给`cli.options`，随后对`parsed.argv`进行删除。
 
+很多同学不禁要问，这个`parsed`变量究竟包含哪些内容呢？我做了下面的试验，结果内容应该会让你秒懂的。
+
+```javascript
+> var parsed = nopt(known, aliases, ["node", "C:\Users\username\AppData\Roaming\npm\node_modules\grunt-cli\bin\grunt", "--force", "--target=dev", "build"], 2);
+
+> parsed
+{ force: true,
+  target: 'dev',
+  argv:
+   { remain: [ 'build' ],
+     cooked:
+      [ '--force',
+        '--target',
+        'dev',
+        'build' ],
+     original:
+      [ '--force',
+        '--target=dev',
+        'build' ],
+     toString: [Function] } }
+```
+
 __这里将`parsed.argv`进行[delete][]并不会直接释放内存，它只是将变量间的引用进行打断破坏有利于内存回收。对于内存管理方面的内容可以查看[memory management](https://developer.mozilla.org/en-US/docs/JavaScript/Memory_Management)。__
 
 ```javascript
@@ -250,11 +391,9 @@ cli.tasks = parsed.argv.remain;
 cli.options = parsed;
 delete parsed.argv;
 ```
-
 接下来，把在`optlist`中的参数值类型为`Array`，但是没有出现在此次调用中的选项加入`cli.options`对象，并将值设为空数组`[]`。
 
 如果我们回过头去看`optlist`变量，我们会发现只有tasks和npm选项的`type`是`Array`。所以下面的代码主要是为了处理这两个选项，我们可以说对于所有情况`cli.options`中都会有`tasks`还有`npm`的属性字段，不同的是，如果我们在调用`grunt`的参数列表中用到这两个选项的话，它们的值会是通过[nopt][]处理后的值，如果不在调用时的选项列表中的话，它们的值为空数组。
-
 
 ```javascript
 // Initialize any Array options that weren't initialized.
@@ -263,10 +402,7 @@ Object.keys(optlist).forEach(function(key) {
     cli.options[key] = [];
   }
 });
-
 ```
-
-
 
 [cli]: http://en.wikipedia.org/wiki/Command-line_interface "Command-line interface"
 [grunt.js]: https://github.com/gruntjs/grunt/blob/master/lib/grunt.js "grunt.js"
@@ -276,4 +412,4 @@ Object.keys(optlist).forEach(function(key) {
 [Array.prototype.push]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/push "Array.prototype.push"
 [process.argv]: http://nodejs.org/api/process.html#process_process_argv "process.argv"
 [delete]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/delete "delete"
-
+[Function.protorype.apply]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/apply "Function.prototype.apply"
