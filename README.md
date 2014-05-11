@@ -20,7 +20,7 @@
     *   help.js
     *   log.js 
     *   task.js
-    *   template.js
+    *   template.js [[done](https://github.com/qivhou/deep-into-grunt/blob/master/grunt/template.md)]
     *   grunt.js
 *   util
     *   task.js
