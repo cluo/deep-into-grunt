@@ -18,7 +18,7 @@
     *   event.js
     *   fail.js
     *   help.js
-    *   log.js 
+    *   <s>log.js</s> [Moved into separate grunt-legacy-log module](https://github.com/gruntjs/grunt/commit/014929198db0f86615a1431bb63309100b8b04b3#diff-24afc91f721fe3c8c9cf96a079c3b064)
     *   task.js
     *   template.js [[done](https://github.com/qivhou/deep-into-grunt/blob/master/grunt/template.md)]
     *   grunt.js
