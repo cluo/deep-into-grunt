@@ -1144,14 +1144,14 @@ false
 
 判断给定的路径是否是CWD（Current Working Directory，当前工作目录）。
 
-该方法的逻辑如下：将`process.cwd()`和通过`fs.realpathSync`[方法](http://nodejs.org/api/fs.html#fs_fs_realpathsync_path_cache)得到的`filepath`的真实路径作为参数，调用了`file.arePathsEquivalent`方法并将结果进行返回。
+该方法的逻辑如下：将通过`fs.realpathSync`[方法](http://nodejs.org/api/fs.html#fs_fs_realpathsync_path_cache)得到的`process.cwd()`和`filepath`的真实路径作为参数，调用`file.arePathsEquivalent`方法进行比较，并将结果返回。
 
 ```javascript
 // Test to see if a filepath is the CWD.
 file.isPathCwd = function() {
   var filepath = path.join.apply(path, arguments);
   try {
-    return file.arePathsEquivalent(process.cwd(), fs.realpathSync(filepath));
+    return file.arePathsEquivalent(fs.realPathSync(process.cwd()), fs.realpathSync(filepath));
   } catch(e) {
     return false;
   }
@@ -1161,14 +1161,14 @@ file.isPathCwd = function() {
 
 判断给定的路径是否包含在CWD（Current Working Directory，当前工作目录）中。
 
-该方法的逻辑非常简单，只是将`process.cwd()`和通过`fs.realpathSync`[方法](http://nodejs.org/api/fs.html#fs_fs_realpathsync_path_cache)得到的`filepath`的真实路径作为参数，调用了`file.doesPathContain`方法，并将结果进行了返回。
+该方法的逻辑非常简单，将通过`fs.realpathSync`[方法](http://nodejs.org/api/fs.html#fs_fs_realpathsync_path_cache)得到的`process.cwd()`和`filepath`的真实路径作为参数，调用`file.doesPathContain`方法，并将结果进行返回。
 
 ```javascript
 // Test to see if a filepath is contained within the CWD.
 file.isPathInCwd = function() {
   var filepath = path.join.apply(path, arguments);
   try {
-    return file.doesPathContain(process.cwd(), fs.realpathSync(filepath));
+    return file.doesPathContain(fs.realPathSync(process.cwd()), fs.realpathSync(filepath));
   } catch(e) {
     return false;
   }
